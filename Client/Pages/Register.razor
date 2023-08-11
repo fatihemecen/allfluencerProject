@@ -1,0 +1,177 @@
+﻿@page "/register"
+@using Api;
+@using BlazorApp.Client.Service;
+@using BlazorApp.Shared;
+@using Objects;
+@using System.Text.Json;
+@using System.Text.Json.Serialization;
+@using System.ComponentModel.DataAnnotations;
+@using Util
+@using static Util.Statics.Enums
+@using Microsoft.JSInterop
+@inject NavigationManager navManager
+@inject HttpClient Http
+@inject ServiceUser srvUser
+@inject mnServiceManager mnService
+@inject IJSRuntime JS
+
+<div class="register-container">
+    <div class="row" style="margin-top:100px">
+        <div class="col-md-12">
+            <div class="text-center m-b-md">
+                <h4 class="font-bold">Kayıt Ekranı</h4>
+            </div>
+            <br />
+            <div class="hpanel">
+                <div class="panel-body">
+                    <EditForm Model ="user" OnValidSubmit="HandleValidSubmit">
+                        <div class="row">
+                            <div class="form-group col-lg-12">
+                                <label>Kullanıcı Adınız</label>
+                                <InputText @bind-Value="userName" class="form-control" />
+                            </div>
+                            <div class="form-group col-lg-6">
+                                <label>Email Adresi</label>
+                                <InputText @bind-Value="email" class="form-control" />
+                            </div>
+                            <div class="form-group col-lg-6">
+                                <label>Ad</label>
+                                <InputText @bind-Value="firstName" style="text-transform: capitalize;" class="form-control" />
+                            </div>
+                            <div class="form-group col-lg-6">
+                                <label>Soyad</label>
+                                <InputText @bind-Value="lastName" style="text-transform: capitalize;" class="form-control" />
+                            </div>
+                            <div class="form-group col-lg-6">
+                                <label>Şifre</label>
+                                <div class="input-group">
+                                    <InputText itemid="txtPassword" type="password" @bind-Value="password" class="form-control password" />
+                                    <div class="input-group-btn">
+                                        <span onclick="showhidepass(this); return false;" id="show_password" class="btn btn-default" type="button">
+                                            <span class="fa fa-eye icon"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <br />
+                        </div>
+                        <br />
+                        <div class="text-center">
+                            <button id="btnRegister" type="submit" class="ladda-button btn btn-info" data-style="slide-left">&nbsp;&nbsp;Kayıt Ol&nbsp;&nbsp;</button>
+                            <a class="btn btn-default" href="/">&nbsp;&nbsp;Vazgeç&nbsp;&nbsp;</a>
+                            @*<button id="btnTemp" type="button" @onclick=cancelClicked class="ladda-button btn btn-info" data-style="slide-left">&nbsp;&nbsp;Temp Ol&nbsp;&nbsp;</button>*@
+                        </div>
+
+                        <br />
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <BlazorApp.Client.Components.CntBottomInfo />
+</div>
+
+@code {
+    coUser user = new coUser();
+
+
+    [Required(ErrorMessage = "Kullanıcı adını girmediniz")]
+    [Display(Name = "Kullanıcı Adı")]
+    [DataType(DataType.Text)]
+    [RegularExpression(@"^[A-Za-z][A-Za-z0-9]{5,13}$", ErrorMessage = "Kullanıcı adınız 6-14 karakter uzunluğunda ve sadece harf veya rakamlardan oluşmalıdır")]
+    private string userName { get; set; }
+
+
+    [Required(ErrorMessage = "Adınızı girmediniz")]
+    [Display(Name = "Ad")]
+    [DataType(DataType.Text)]
+    [RegularExpression(@"^\p{L}{2,}$", ErrorMessage = "Ad alanı sadece harflerden ve en az 2 karakterden oluşmalıdır.")]
+    private string firstName { get; set; }
+
+
+    [Required(ErrorMessage = "Soyadınızı girmediniz")]
+    [Display(Name = "Soyad")]
+    [DataType(DataType.Text)]
+    [RegularExpression(@"^\p{L}{2,}$", ErrorMessage = "Soyad alanı sadece harflerden ve en az 2 karakterden oluşmalıdır.")]
+    private string lastName { get; set; }
+
+
+    [Required(ErrorMessage = "Emailinizi girmediniz")]
+    [Display(Name = "Email")]
+    [DataType(DataType.EmailAddress)]
+    [EmailAddress(ErrorMessage = "Lütfen geçerli bir email adresi girin")]
+    private string email { get; set; }
+
+
+    [Required(ErrorMessage = "Şifrenizi girmediniz")]
+    [Display(Name = "Şifre")]
+    [DataType(DataType.Password)]
+    [RegularExpression(@"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?.!@$%^&*-]).{8,}$", ErrorMessage = "Şifreniz en az 1 büyük harf, 1 küçük harf, 1 rakam, 1 özel karakter içermeli ve en az 8 karakter uzunluğunda olmalıdır")]
+    private string password { get; set; }
+
+
+    private async void HandleValidSubmit()
+    {
+        var options = new JsonSerializerOptions()
+        {
+            AllowTrailingCommas = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            IgnoreReadOnlyProperties = true,
+            NumberHandling = JsonNumberHandling.WriteAsString,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+        coUser user2 = new coUser()
+        {
+            UserName = userName,
+            FirstName = firstName,
+            LastName = lastName,
+            UserEmail = email,
+            UserPassword = password,
+            UserRole = 1
+        };
+        //bool response = await Global.busAsyncNew.CreateUser("test2","test2","test2","test2@gmail.com","test2",1);
+        //bool response = await Global.busAsyncNew.CheckUser("EvilSmurf", "fatih.emecen98@gmail.com");
+        //user = await Http.GetFromJsonAsync<coUser>("/api/CreateUser") ?? new coUser{};
+        //var command = new coUser() { UserName = "Test2", UserRole = 1,UserFirstName = "Test2",UserLastName = "Test2",Password = "test2",UserEmail = "test2@gmail.com"};
+        HttpResponseMessage response = await Http.PostAsJsonAsync("/api/CreateUser", user2,options).ConfigureAwait(false);
+        string jwt = await response.Content.ReadAsStringAsync();
+        mnService.setToken(jwt);
+        return;
+        //ApiResponse<int> resp = await srvUser.CreateUser(user.UserName,user.UserFirstName, user.UserLastName, user.Password, 1, user.UserEmail, DateTime.UtcNow, Guid.NewGuid().ToString()).ConfigureAwait(false);
+        //bool resp = await srvUser.CreateUser("test3", "test3", "test3", "test3@gmail.com", "test3", 1).ConfigureAwait(false);
+        //string response = await srvUser.Register(user);
+
+
+
+        
+    }
+
+    public static async Task RegisterDoneClicked()
+    {
+        await GoVerifyCode.Invoke();
+    }
+
+    private async Task RegisterDoneClickedAsync()
+    {
+        navManager.NavigateTo("/verifycode");
+        return;
+    }
+
+    private static Func<Task> GoVerifyCode;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GoVerifyCode = RegisterDoneClickedAsync;
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+     
+
+        return base.OnAfterRenderAsync(firstRender);
+    }
+
+}

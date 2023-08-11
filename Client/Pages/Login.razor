@@ -1,0 +1,101 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Objects;
+@using Util
+@inject IJSRuntime JS
+@inject mnTokenManager mnToken
+@inject NavigationManager navManager
+@inject mnServiceManager mnService
+@inject HttpClient Http
+
+<div class="login-container">
+    <div class="row" style="margin-top:100px">
+        <div class="col-md-12">
+            <div class="text-center m-b-md">
+                <h2><span class="font-bold">@Statics.ApplicationTexts.AppTextUpper</span></h2>
+                <h5 class="text-info"><span class="font-bold"><i>@Statics.ApplicationTexts.AppMotto</i></span></h5>
+            </div>
+            <br />
+            <div class="hpanel">
+                <div class="panel-body">
+
+                    <EditForm Model="@lgchk" OnValidSubmit="HandleValidSubmit">
+                        <div class="row">
+                            <div class="form-group col-lg-12">
+                                <label>Email Adresiniz</label>
+                                <InputText type="email" @bind-Value="email" class="form-control" />
+                            </div>
+                            <div class="form-group col-lg-12">
+                                <label>Şifre</label>
+                                <div class="input-group">
+                                    <InputText itemid="txtPassword" type="password" @bind-Value="password" class="form-control password" />
+                                    <div class="input-group-btn">
+                                        <span onclick="showhidepass(this); return false;" id="show_password" class="btn btn-default" type="button">
+                                            <span class="fa fa-eye icon"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <br />
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="text-center">
+                                    <button id="btnLogin" type="submit" class="ladda-button btn btn-info" data-style="slide-left">&nbsp;&nbsp;Giriş&nbsp;&nbsp;</button>
+                                    <a class="btn btn-default" href=@Statics.ApplicationPaths.aplRegister>Kayıt Ol</a>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <BlazorApp.Client.Components.CntBottomInfo />
+</div>
+
+@code {
+    [Required(ErrorMessage = "Emailinizi girmediniz")]
+    [Display(Name = "Email")]
+    [DataType(DataType.EmailAddress)]
+    [EmailAddress(ErrorMessage = "Lütfen geçerli bir email adresi girin")]
+    private string email { get; set; }
+
+    [Required(ErrorMessage = "Şifrenizi girmediniz")]
+    [Display(Name = "Şifre")]
+    [DataType(DataType.Password)]
+    [RegularExpression(@"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?.!@$%^&*-]).{8,}$", ErrorMessage = "Şifreniz en az 1 büyük harf, 1 küçük harf, 1 rakam, 1 özel karakter içermeli ve en az 8 karakter uzunluğunda olmalıdır")]
+    private string password { get; set; }
+
+
+    coUserLoginCheck lgchk = new coUserLoginCheck();
+
+    private async void HandleValidSubmit()
+    {
+        coUserLoginCheck loginCheck = new coUserLoginCheck()
+            {
+                Email = email,
+                Password = password
+            };
+        if (!string.IsNullOrEmpty(loginCheck.Email) || !string.IsNullOrEmpty(loginCheck.Password))
+        {
+            //await JS.InvokeAsync<string>("startLoading", "btnLogin");
+
+            //string response = await srvUser.LoginUser(loginCheck.Email, loginCheck.Password);
+            HttpResponseMessage response = await Http.PostAsJsonAsync("/api/LoginUser", loginCheck).ConfigureAwait(false);
+            
+            //await JS.InvokeAsync<string>("stopLoading", "btnLogin");
+
+
+                string jwt = await response.Content.ReadAsStringAsync(); 
+                mnService.setToken(jwt);
+                navManager.NavigateTo("/");
+                return;
+            
+        }
+    }
+}

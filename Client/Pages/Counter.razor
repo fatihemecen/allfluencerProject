@@ -1,18 +1,38 @@
 ﻿@page "/counter"
+@using BlazorApp.Shared;
+@using static System.Net.WebRequestMethods;
+@inject HttpClient Http
+
 
 <PageTitle>Counter</PageTitle>
 
 <h1>Counter</h1>
 
-<p role="status">Current count: @currentCount</p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<button class="btn btn-primary" @onclick="Create">Click me</button>
 
 @code {
-    private int currentCount = 0;
+    private TestAddress testAddress = new TestAddress()
+        {
+            AddressLine1 = "Sahrayıcedit",
+            AddressLine2 = "İnönü",
+            City = "İstanbul",
+            StateProvince = "Kadıköy",
+            CountryRegion = "US",
+            PostalCode = "34123",
+            guid = Guid.NewGuid(),
+            ModifiedtDate = DateTime.Now
 
-    private void IncrementCount()
+    };
+    private async Task Create()
     {
-        currentCount++;
+        try
+        {
+            var result = await Http.PostAsJsonAsync("/api/TestAddressCreate", testAddress);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
     }
 }
